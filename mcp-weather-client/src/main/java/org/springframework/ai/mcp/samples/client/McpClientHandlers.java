@@ -14,6 +14,7 @@ import org.springaicommunity.mcp.annotation.McpSampling;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.lang.NonNull;
 
 @Service
 public class McpClientHandlers {
@@ -43,13 +44,16 @@ public class McpClientHandlers {
 
 		logger.info("MCP SAMPLING: {}", llmRequest);
 
-		String llmResponse = chatClient.prompt()
-			.system(llmRequest.systemPrompt())
-			.user(((TextContent) llmRequest.messages().get(0).content()).text())
-			.call()
-			.content();
+		String systemPrompt = nn(llmRequest.systemPrompt());
+		String userText = nn(((TextContent) llmRequest.messages().get(0).content()).text());
 
-		return CreateMessageResult.builder().content(new TextContent(llmResponse)).build();
+		String llmResponse = chatClient.prompt().system(systemPrompt).user(userText).call().content();
+
+		return CreateMessageResult.builder().content(new TextContent(nn(llmResponse))).build();
 	};
+
+	private static @NonNull String nn(String s) {
+		return s == null ? "" : s;
+	}
 
 }

@@ -16,6 +16,7 @@
 package org.springframework.ai.mcp.samples.client;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 
 import org.springframework.ai.chat.client.ChatClient;
@@ -24,6 +25,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.lang.NonNull;
 
 @SpringBootApplication
 public class McpClientApplication {
@@ -37,8 +39,9 @@ public class McpClientApplication {
 		return chatClientBuilder.build();
 	}
 
+	@NonNull
 	String userPrompt = """
-			Check the weather in Amsterdam now and show the creative response!
+			Check the weather in latitude=52.52&longitude=13.41 now and show the creative response!
 			Please incorporate all creative responses from all LLM providers.
 
 			Please use the weather poem (returned from the tool) to find a publisher online.
@@ -47,11 +50,18 @@ public class McpClientApplication {
 
 	@Bean
 	public CommandLineRunner predefinedQuestions(ChatClient chatClient, ToolCallbackProvider mcpToolProvider) {
-		return args -> System.out.println(chatClient.prompt(userPrompt)
-			.toolContext(Map.of("progressToken", "token-" + new Random().nextInt()))
-			.toolCallbacks(mcpToolProvider)
-			.call()
-			.content());
+		return args -> {
+			System.out.println(chatClient.prompt(userPrompt)
+				.toolContext(createToolContext())
+				.toolCallbacks(mcpToolProvider)
+				.call()
+				.content());
+		};
+	}
+
+	@NonNull
+	private Map<String, Object> createToolContext() {
+		return Objects.requireNonNull(Map.of("progressToken", "token-" + new Random().nextInt()));
 	}
 
 }
